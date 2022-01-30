@@ -2,6 +2,7 @@ using Abp.Authorization.Users;
 using Abp.Domain.Repositories;
 using Abp.Domain.Uow;
 using Abp.Organizations;
+using System.Threading.Tasks;
 using TAuth02.Authorization.Roles;
 
 namespace TAuth02.Authorization.Users
@@ -29,6 +30,16 @@ namespace TAuth02.Authorization.Users
                 userOrganizationUnitRepository,
                 organizationUnitRoleRepository)
         {
+        }
+
+        public override User FindById(long userId)
+        {
+            return base.FindById(userId);
+        }
+
+        public override Task<User> FindByIdAsync(long userId)
+        {
+            return base.FindByIdAsync(userId);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Abp.Authorization;
 using Abp.Authorization.Users;
 using Abp.Configuration;
+using Abp.Dependency;
 using Abp.Domain.Repositories;
 using Abp.Domain.Uow;
 using Abp.IdentityFramework;
@@ -49,6 +50,7 @@ namespace TAuth02.Authorization.Users
 
         public async Task<ClaimsIdentity> GenerateUserIdentityAsync(User user, ClaimsIdentity CurrentIdentity, string authenticationType)
         {
+            
             // Note the authenticationType must match the one defined in CookieAuthenticationOptions.AuthenticationType
             var userIdentity = await base.CreateIdentityAsync(user, authenticationType);
 

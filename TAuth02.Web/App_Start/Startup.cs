@@ -10,6 +10,7 @@ using Owin;
 using Microsoft.AspNet.Identity.Owin;
 using Abp.Dependency;
 using Abp.Runtime.Security;
+using TAuth02.Authorization.Users;
 
 [assembly: OwinStartup(typeof(Startup))]
 
@@ -29,9 +30,9 @@ namespace TAuth02.Web
             {
                 Provider = new CookieAuthenticationProvider
                 {
-                    OnValidateIdentity = context => SecurityStampValidator.OnValidateIdentity<Authorization.Users.UserManager, Authorization.Users.User, long>(
-                    validateInterval: TimeSpan.FromSeconds(5),
-                    regenerateIdentityCallback: (manager, user) => manager.GenerateUserIdentityAsync(user,context.Identity, DefaultAuthenticationTypes.ApplicationCookie),
+                    OnValidateIdentity = context => CustomSecurityStampValidator.OnValidateIdentity<Authorization.Users.UserManager, Authorization.Users.User, long>(
+                    validateInterval: TimeSpan.FromSeconds(20),
+                    regenerateIdentityCallback: (manager, user) => manager.GenerateUserIdentityAsync(user, context.Identity, DefaultAuthenticationTypes.ApplicationCookie),
                     getUserIdCallback: claimsIdentity => ClaimsIdentityExtensions.GetUserId(claimsIdentity).Value).Invoke(context),
                 },
                 AuthenticationType = DefaultAuthenticationTypes.ApplicationCookie,
