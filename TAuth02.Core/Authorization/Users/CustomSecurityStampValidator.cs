@@ -57,8 +57,8 @@ namespace TAuth02.Authorization.Users
             {
                 var uowm = Abp.Dependency.IocManager.Instance.Resolve<IUnitOfWorkManager>();
                 var tenantId = context.Identity.Claims.Cast<Claim>().FirstOrDefault(p => p.Type == Abp.Runtime.Security.AbpClaimTypes.TenantId)?.Value;
-
-                await uowm.WithUnitOfWork(async () =>
+                
+                await uowm.WithUnitOfWorkAsync(async() =>
                  {
                      using (uowm.Current.SetTenantId(string.IsNullOrEmpty(tenantId) ? (int?)null : Convert.ToInt32(tenantId)))
                      {
