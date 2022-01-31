@@ -55,65 +55,68 @@ namespace TAuth02.Authorization.Users
             }
             return async context =>
             {
-
-                IUnitOfWorkManager uowm = Abp.Dependency.IocManager.Instance.Resolve<IUnitOfWorkManager>();
-
+                var uowm = Abp.Dependency.IocManager.Instance.Resolve<IUnitOfWorkManager>();
                 var tenantId = context.Identity.Claims.Cast<Claim>().FirstOrDefault(p => p.Type == Abp.Runtime.Security.AbpClaimTypes.TenantId)?.Value;
-                using (uowm.Current.SetTenantId(string.IsNullOrEmpty(tenantId) ? (int?)null : Convert.ToInt32(tenantId)))
-                {
-                    var currentUtc = DateTimeOffset.UtcNow;
-                    if (context.Options != null && context.Options.SystemClock != null)
-                    {
-                        currentUtc = context.Options.SystemClock.UtcNow;
-                    }
-                    var issuedUtc = context.Properties.IssuedUtc;
 
-                    // Only validate if enough time has elapsed
-                    var validate = (issuedUtc == null);
-                    if (issuedUtc != null)
-                    {
-                        var timeElapsed = currentUtc.Subtract(issuedUtc.Value);
-                        validate = timeElapsed > validateInterval;
-                    }
-                    if (validate)
-                    {
-                        var manager = context.OwinContext.GetUserManager<TManager>();
-                        var userId = getUserIdCallback(context.Identity);
-                        if (manager != null && userId != null)
-                        {
-                            var user = await manager.FindByIdAsync(userId);
-                            var reject = true;
-                            // Refresh the identity if the stamp matches, otherwise reject
-                            if (user != null && manager.SupportsUserSecurityStamp)
-                            {
-                                var securityStamp =
-                                    context.Identity.FindFirstValue(Constants.DefaultSecurityStampClaimType);
-                                if (securityStamp == await manager.GetSecurityStampAsync(userId))
-                                {
-                                    reject = false;
-                                    // Regenerate fresh claims if possible and resign in
-                                    if (regenerateIdentityCallback != null)
-                                    {
-                                        var identity = await regenerateIdentityCallback.Invoke(manager, user);
-                                        if (identity != null)
-                                        {
-                                            // Fix for regression where this value is not updated
-                                            // Setting it to null so that it is refreshed by the cookie middleware
-                                            context.Properties.IssuedUtc = null;
-                                            context.Properties.ExpiresUtc = null;
-                                            context.OwinContext.Authentication.SignIn(context.Properties, identity);
-                                        }
-                                    }
-                                }
-                            }
-                            if (reject)
-                            {
-                                context.RejectIdentity();
-                                context.OwinContext.Authentication.SignOut(context.Options.AuthenticationType);
-                            }
-                        }
-                    }
-                }
+                await uowm.WithUnitOfWork(async () =>
+                 {
+                     using (uowm.Current.SetTenantId(string.IsNullOrEmpty(tenantId) ? (int?)null : Convert.ToInt32(tenantId)))
+                     {
+                         var currentUtc = DateTimeOffset.UtcNow;
+                         if (context.Options != null && context.Options.SystemClock != null)
+                         {
+                             currentUtc = context.Options.SystemClock.UtcNow;
+                         }
+                         var issuedUtc = context.Properties.IssuedUtc;
+
+                        // Only validate if enough time has elapsed
+                        var validate = (issuedUtc == null);
+                         if (issuedUtc != null)
+                         {
+                             var timeElapsed = currentUtc.Subtract(issuedUtc.Value);
+                             validate = timeElapsed > validateInterval;
+                         }
+                         if (validate)
+                         {
+                             var manager = context.OwinContext.GetUserManager<TManager>();
+                             var userId = getUserIdCallback(context.Identity);
+                             if (manager != null && userId != null)
+                             {
+                                 var user = await manager.FindByIdAsync(userId);
+                                 var reject = true;
+                                // Refresh the identity if the stamp matches, otherwise reject
+                                if (user != null && manager.SupportsUserSecurityStamp)
+                                 {
+                                     var securityStamp =
+                                         context.Identity.FindFirstValue(Constants.DefaultSecurityStampClaimType);
+                                     if (securityStamp == await manager.GetSecurityStampAsync(userId))
+                                     {
+                                         reject = false;
+                                        // Regenerate fresh claims if possible and resign in
+                                        if (regenerateIdentityCallback != null)
+                                         {
+                                             var identity = await regenerateIdentityCallback.Invoke(manager, user);
+                                             if (identity != null)
+                                             {
+                                                // Fix for regression where this value is not updated
+                                                // Setting it to null so that it is refreshed by the cookie middleware
+                                                context.Properties.IssuedUtc = null;
+                                                 context.Properties.ExpiresUtc = null;
+                                                 context.OwinContext.Authentication.SignIn(context.Properties, identity);
+                                             }
+                                         }
+                                     }
+                                 }
+                                 if (reject)
+                                 {
+                                     context.RejectIdentity();
+                                     context.OwinContext.Authentication.SignOut(context.Options.AuthenticationType);
+                                 }
+                             }
+                         }
+                     }
+                 });
+
             };
         }
     }

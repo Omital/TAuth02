@@ -32,14 +32,5 @@ namespace TAuth02.Authorization.Users
         {
         }
 
-        public override User FindById(long userId)
-        {
-            return base.FindById(userId);
-        }
-
-        public override Task<User> FindByIdAsync(long userId)
-        {
-            return base.FindByIdAsync(userId);
-        }
     }
 }
